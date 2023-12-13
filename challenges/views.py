@@ -1,6 +1,7 @@
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect
+from django.http import Http404, HttpResponseNotFound, HttpResponseRedirect
 from django.urls import reverse
+from django.template.loader import render_to_string
 
 monthly_challenges = {
     "january": "Eat no meat for the entire month!",
@@ -14,7 +15,7 @@ monthly_challenges = {
     "september": "Learn Django for at least 20 minutes every day!",
     "october": "Eat no meat for the entire month!",
     "november": "Walk for at least 20 minutes every day!",
-    "december": "Learn Django for at least 20 minutes every day!"
+    "december": None
 }  # dictionary: key-value paires
 
 # Create your views here.
@@ -24,7 +25,8 @@ def monthly_challenge_by_number(request, month):
     months = list(monthly_challenges.keys())
     if month in range(1, 13):  # month >= 1 & month < 13!
         redirect_month = months[month-1]
-        redirect_path = reverse("month-challenge", args=[redirect_month]) # e.g. /challenges/january 
+        # e.g. /challenges/january
+        redirect_path = reverse("month-challenge", args=[redirect_month])
         return HttpResponseRedirect(redirect_path)
     else:
         return HttpResponseNotFound("<h1>This input is not supported!</h1>")
@@ -33,21 +35,32 @@ def monthly_challenge_by_number(request, month):
 def monthly_challenge(request, month):
     try:
         challenge_text = monthly_challenges[month]
-        response_data = f"<h1>{challenge_text}</h1>"
+        # response_data = render_to_string("challenges/challenge.html")
+        # return HttpResponse(response_data)
+        return render(request, "challenges/challenge.html", {
+            "month_name": month,
+            "text": challenge_text
+        })
     except:
-        return HttpResponseNotFound("<h1>This input is not supported!</h1>")
-    return HttpResponse(response_data)
+        # response_data = render_to_string("404.html")
+        # return HttpResponseNotFound(response_data)
+        raise Http404()
+
 
 def month_selection(request):
-    list_items = ""
+    # list_items = ""
     months = list(monthly_challenges.keys())
-    
-    for month in months:
-        capitalized_month = month.capitalize()
-        month_path = reverse("month-challenge", args=[month])
-        list_items += f"<li><a href=\"{month_path}\">{capitalized_month}</a></li>"
-    
-    response_data = f"<ul>{list_items}</ul>"
+
+    return render(request, "challenges/month_selection.html", {
+        "months": months
+    })
+    # for month in months:
+    #     capitalized_month = month.capitalize()
+    #     month_path = reverse("month-challenge", args=[month])
+    #     list_items += f"<li><a href=\"{month_path}\">{capitalized_month}</a></li>"
+
+    # response_data = f"<ul>{list_items}</ul>"
+
     # response_data = """
     #     <ul>
     #         <li><a href="/challenges/1">January</a></li>
@@ -65,4 +78,4 @@ def month_selection(request):
     #     </ul>
     # """
 
-    return HttpResponse(response_data)
+    # return HttpResponse(response_data)
